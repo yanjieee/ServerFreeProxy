@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.Net.Sockets;
 using System.Net;
 using System.Threading;
+using System.IO;
 
 namespace ServerFreeProxy
 {
@@ -17,6 +18,7 @@ namespace ServerFreeProxy
         public Form1()
         {
             InitializeComponent();
+            listView1.Items.Clear();
             MyServer myServer = new MyServer();
             myServer.onReport += new MyServer.receiveReportDelegate(onGetReport);
             Thread th = new Thread(myServer.run);
@@ -52,9 +54,38 @@ namespace ServerFreeProxy
                     {
                         listView1.Items[i].SubItems[0].Text = (i + 1).ToString();
                     }
+                    saveListView2HtmlTable(listView1);
                 });
                 
             }
+        }
+
+        private void saveListView2HtmlTable(ListView listview)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(string.Format("<html><head><title>Reports{0}</title></head><body><table border=\"1\"><thead>", DateTime.Now.ToString()));
+            foreach (ColumnHeader ch in listview.Columns)
+            {
+                sb.Append(string.Format("<th> {0} </th>", ch.Text));
+            }
+            sb.Append("</thead>");
+            foreach (ListViewItem item in listview.Items)
+            {
+                sb.Append("<tr>");
+                foreach(System.Windows.Forms.ListViewItem.ListViewSubItem subitem in item.SubItems)
+                {
+                    sb.Append("<td>");
+                    sb.Append(subitem.Text);
+                    sb.Append("</td>");
+                }
+                sb.Append("</tr>");
+            }
+            sb.Append("<tbody></body>");
+            FileStream fs = new FileStream("c:\\inetpub\\wwwroot\\a.html", FileMode.Create);
+            StreamWriter sw = new StreamWriter(fs, Encoding.Default);
+            sw.Write(sb.ToString());
+            sw.Close();
+            fs.Close();
         }
 
         class MyServer
